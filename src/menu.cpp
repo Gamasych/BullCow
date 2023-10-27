@@ -3,170 +3,167 @@
 //
 
 #include "menu.h"
-#include <map>
-#include <iostream>
-#include <functional>
+#include "common_types.h"
 #include <iomanip>
 #include <stdexcept>
+#include <iostream>
 
 namespace menu_settings
 {
-constexpr int kMaxCount = 8;
-
-constexpr int kMinCount = 1;
-
-const std::map<TypeGame, std::string> typeDefinition{
-	{TypeGame::word, "use words"},
-	{TypeGame::numb, "use numbers"}
-};
-
-const std::map<DifficultyGame, std::string> difficultDefinition{
-	{DifficultyGame::easy, "easy level"},
-	{DifficultyGame::medium, "medium level"},
-	{DifficultyGame::hard, "hard level"}
-};
-
-const std::map<OpponentGame, std::string> opponentDefinition{
-	{OpponentGame::onlyPlayer, "only player"},
-	{OpponentGame::onlyComputer, "only computer"},
-	{OpponentGame::ComputerVsPlayer, "computer vs player"},
-	{OpponentGame::PlayerVsPlayer, "p2p"}
-};
-
-enum class SettingsNumb
+MenuSettings::Settings::Settings()
+	: type(TypeGame::numb),
+	  difficulty(DifficultyGame::medium),
+	  opponent(OpponentGame::ComputerVsPlayer),
+	  numb(4),
+	  repeatSymbol(false)
 {
-	count,
-	type,
-	difficulty,
-	opponent,
-	repeat,
-	read,
-	exit
-};
 
-void setCount(Settings *param)
+}
+
+MenuSettings::MenuSettings(const Settings &params)
+	: maxCount_(8),
+	  minCount_(1),
+	  params_(params),
+	  typeDefinition_({{TypeGame::word, "use words"},
+					   {TypeGame::symbol, "use symbols"},
+					   {TypeGame::numb, "use numbers"}}),
+	  difficultDefinition_({{DifficultyGame::easy, "easy level"},
+							{DifficultyGame::medium, "medium level"},
+							{DifficultyGame::hard, "hard level"}}),
+	  opponentDefinition_({{OpponentGame::onlyPlayer, "only player"},
+						   {OpponentGame::onlyComputer, "only computer"},
+						   {OpponentGame::ComputerVsPlayer, "computer vs player"},
+						   {OpponentGame::PlayerVsPlayer, "p2p"}}),
+	  settingsVal_({{SettingsNumb::count, {"Number of symbols", &MenuSettings::setCount}},
+					{SettingsNumb::type, {"Type of symbols", &MenuSettings::setType}},
+					{SettingsNumb::difficulty, {"Game difficulty", &MenuSettings::setDifficulty}},
+					{SettingsNumb::opponent, {"Opponent in the game", &MenuSettings::setOpponent}},
+					{SettingsNumb::repeat, {"Possibility of character repetition", &MenuSettings::setRepeat}},
+					{SettingsNumb::read, {"Display current settings", &MenuSettings::readParams}},
+					{SettingsNumb::exit, {"Exit", &MenuSettings::readParams}}})
+{
+
+}
+
+MenuSettings::Settings MenuSettings::settings()
+{
+	int com{0};
+	do {
+		std::cout << std::setw(kWidthDivider) << std::setfill('-') << "\n";
+		for (auto command : settingsVal_) {
+			std::cout << static_cast<int>(command.first) << " - " << command.second.first << std::endl;
+		}
+		std::cout << "Select an variant: ";
+		std::cin >> com;
+		std::cout << std::setw(kWidthDivider) << std::setfill('-') << "\n";
+		std::cout << std::setfill(' ');
+		try {
+			(this->*(settingsVal_.at(static_cast<SettingsNumb>(com)).second))();
+		}
+		catch (std::exception &ex) {
+			std::cout << "Error! Insert correct variant (" << ex.what() << ")" << std::endl;
+		}
+		std::cout << std::setw(kWidthDivider) << std::setfill('-') << "\n" << std::endl;
+		std::cout << std::setfill(' ');
+	}
+	while (com != static_cast<int>(SettingsNumb::exit));
+	return params_;
+}
+
+void MenuSettings::setValue(const MenuSettings::Settings &params)
+{
+	params_ = params;
+}
+
+void MenuSettings::setCount()
 {
 	int count;
 	std::string str{"Value must be from "};
-	str += std::to_string(kMinCount) + " to " + std::to_string(kMaxCount);
+	str += std::to_string(minCount_) + " to " + std::to_string(maxCount_);
 	std::cout << "Insert numbers of symbols in word (" << str << "): ";
 	std::cin >> count;
-	if (count > kMaxCount || count < kMinCount) {
+	if (count > maxCount_ || count < minCount_) {
 		throw std::invalid_argument(str);
 	}
-	param->numb = count;
+	params_.numb = count;
 }
 
-void setType(Settings *param)
+void MenuSettings::setType()
 {
 	int count;
-	for (const auto &val : typeDefinition) {
+	for (const auto &val : typeDefinition_) {
 		std::cout << static_cast<int>(val.first) << " - to " << val.second << '\n';
 	}
 	std::cout << "Insert variant: ";
 	std::cin >> count;
-	if (count < static_cast<int>(typeDefinition.begin()->first)
-		|| count > static_cast<int>((--typeDefinition.end())->first)) {
+	if (count < static_cast<int>(typeDefinition_.begin()->first)
+		|| count > static_cast<int>((--typeDefinition_.end())->first)) {
 		throw std::invalid_argument(
-			"Argument must be equal " + std::to_string(static_cast<int>(typeDefinition.begin()->first)) + " or "
-				+ std::to_string(static_cast<int>((--typeDefinition.end())->first)));
+			"Argument must be equal " + std::to_string(static_cast<int>(typeDefinition_.begin()->first)) + " or "
+				+ std::to_string(static_cast<int>((--typeDefinition_.end())->first)));
 	}
-	param->type = static_cast<TypeGame>(count);
+	params_.type = static_cast<TypeGame>(count);
 }
 
-void setDifficulty(Settings *param)
+void MenuSettings::setDifficulty()
 {
 	int count;
-	for (const auto &val : difficultDefinition) {
+	for (const auto &val : difficultDefinition_) {
 		std::cout << static_cast<int>(val.first) << " - to " << val.second << '\n';
 	}
 	std::cout << "Insert variant: ";
 	std::cin >> count;
-	if (count < static_cast<int>(difficultDefinition.begin()->first)
-		|| count > static_cast<int>((--difficultDefinition.end())->first)) {
+	if (count < static_cast<int>(difficultDefinition_.begin()->first)
+		|| count > static_cast<int>((--difficultDefinition_.end())->first)) {
 		throw std::invalid_argument(
-			"Argument must be equal " + std::to_string(static_cast<int>(difficultDefinition.begin()->first)) + " or "
-				+ std::to_string(static_cast<int>((--difficultDefinition.end())->first)));
+			"Argument must be equal " + std::to_string(static_cast<int>(difficultDefinition_.begin()->first)) + " or "
+				+ std::to_string(static_cast<int>((--difficultDefinition_.end())->first)));
 	}
-	param->difficulty = static_cast<DifficultyGame>(count);
+	params_.difficulty = static_cast<DifficultyGame>(count);
 }
 
-void setOpponent(Settings *param)
+void MenuSettings::setOpponent()
 {
 	int count;
 
-	for (const auto &val : opponentDefinition) {
+	for (const auto &val : opponentDefinition_) {
 		std::cout << static_cast<int>(val.first) << " - to " << val.second << '\n';
 	}
 	std::cout << "Insert variant: ";
 	std::cin >> count;
-	if (count < static_cast<int>(opponentDefinition.begin()->first)
-		|| count > static_cast<int>((--opponentDefinition.end())->first)) {
+	if (count < static_cast<int>(opponentDefinition_.begin()->first)
+		|| count > static_cast<int>((--opponentDefinition_.end())->first)) {
 		throw std::invalid_argument(
-			"Argument must be equal " + std::to_string(static_cast<int>(opponentDefinition.begin()->first)) + " or "
-				+ std::to_string(static_cast<int>((--opponentDefinition.end())->first)));
+			"Argument must be equal " + std::to_string(static_cast<int>(opponentDefinition_.begin()->first)) + " or "
+				+ std::to_string(static_cast<int>((--opponentDefinition_.end())->first)));
 	}
-	param->opponent = static_cast<OpponentGame>(count);
+	params_.opponent = static_cast<OpponentGame>(count);
 }
 
-void setRepeat(Settings *param)
+void MenuSettings::setRepeat()
 {
 	int count;
 
 	std::cout << "Insert '0' - to disable repeat symbol, or '1' - to enable repeat symbol: ";
 	std::cin >> count;
 
-	param->repeatSymbol = count;
+	params_.repeatSymbol = count;
 }
 
-void readParams(Settings *param)
+void MenuSettings::readParams()
 {
 	try {
 		const int max_length = 16;
-		std::cout << std::setw(max_length) << "Numbers: " << param->numb << "\n";
-		std::cout << std::setw(max_length) << "Type: " << typeDefinition.at(param->type) << "\n";
-		std::cout << std::setw(max_length) << "Repeat symbols: " << (param->repeatSymbol ? "true" : "false") << "\n";
-		std::cout << std::setw(max_length) << "Opponent: " << opponentDefinition.at(param->opponent) << "\n";
-		std::cout << std::setw(max_length) << "Difficulty: " << difficultDefinition.at(param->difficulty) << "\n";
+		std::cout << std::setw(max_length) << "Numbers: " << params_.numb << "\n";
+		std::cout << std::setw(max_length) << "Type: " << typeDefinition_.at(params_.type) << "\n";
+		std::cout << std::setw(max_length) << "Repeat symbols: " << (params_.repeatSymbol ? "true" : "false") << "\n";
+		std::cout << std::setw(max_length) << "Opponent: " << opponentDefinition_.at(params_.opponent) << "\n";
+		std::cout << std::setw(max_length) << "Difficulty: " << difficultDefinition_.at(params_.difficulty) << "\n";
 	}
-	catch (std::exception& ex){
+	catch (std::exception &ex) {
 		std::cerr << "Error read settings" << ex.what();
 	}
 }
 
-Settings settings()
-{
-	Settings res{};
-	int com{0};
-	const std::map<SettingsNumb, std::pair<std::string, std::function<void(Settings *)>>>
-		kSettingsVal{{SettingsNumb::count, {"Number of symbols", setCount}},
-					 {SettingsNumb::type, {"Type of symbols", setType}},
-					 {SettingsNumb::difficulty, {"Game difficulty", setDifficulty}},
-					 {SettingsNumb::opponent, {"Opponent in the game", setOpponent}},
-					 {SettingsNumb::repeat, {"Possibility of character repetition", setRepeat}},
-					 {SettingsNumb::read, {"Display current settings", readParams}},
-					 {SettingsNumb::exit, {"Exit", [](Settings *v = nullptr)
-					 { return; }}}};
-	do {
-		std::cout << std::setw(25) << std::setfill('-') << "\n";
-		for (auto command : kSettingsVal) {
-			std::cout << static_cast<int>(command.first) << " - " << command.second.first << std::endl;
-		}
-		std::cout << "Select an variant: ";
-		std::cin >> com;
-		std::cout << std::setw(25) << std::setfill('-') << "\n";
-		std::cout << std::setfill(' ');
-		try {
-			kSettingsVal.at(static_cast<SettingsNumb>(com)).second(&res);
-		}
-		catch (std::exception &ex) {
-			std::cout << "Error! Insert correct variant (" << ex.what() << ")" << std::endl;
-		}
-		std::cout << std::setw(25) << std::setfill('-') << "\n" << std::endl;
-		std::cout << std::setfill(' ');
-	}
-	while (com != static_cast<int>(SettingsNumb::exit));
-	return res;
-}
 
 }//namespace menu_settings

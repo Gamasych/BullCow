@@ -11,6 +11,7 @@
 #include "knut.h"
 #include <future>
 #include "menu.h"
+#include "core.h"
 
 template<typename T>
 std::ostream &operator<<(std::ostream &os, const std::vector<T> &arr)
@@ -22,17 +23,17 @@ std::ostream &operator<<(std::ostream &os, const std::vector<T> &arr)
 	os << "]" << std::endl;
 	return os;
 }
-
+/*
 void player()
 {
-	auto computer{generator::getRandom<int, 4>()};
+	auto computer{getRandom<int, 4>()};
 	int count{1};
 	std::cout << "Insert numb \n";
-	auto player{generator::getPlayer<int, 4>()};
+	auto player{getPlayer<int, 4>()};
 	auto res = counter::countBullsCows(computer.begin(), computer.end(), player.begin());
 	while (res.first != 4) {
 		std::cout << "Bulls: " << res.first << "; Cows: " << res.second << "\n";
-		player = generator::getPlayer<int, 4>();
+		player = getPlayer<int, 4>();
 		res = counter::countBullsCows(computer.begin(), computer.end(), player.begin());
 		++count;
 	}
@@ -76,10 +77,10 @@ void compVSPlayer()
 	std::vector<int> temp{1, 2, 3, 4, 5, 6, 7, 8, 9, 0};
 	auto ll = std::async(&knut::allPermutation<int>, temp, 4, func);
 
-	auto computer{generator::getRandom<std::vector<int>>()};
+	auto computer{getRandom<std::vector<int>>()};
 	int count{1};
 	std::cout << "Insert numb \n";
-	auto player{generator::getPlayer<std::vector<int>>()};
+	auto player{getPlayer<std::vector<int>>()};
 	auto res = counter::countBullsCows(computer.begin(), computer.end(), player.begin());
 	std::cout << "Bulls: " << res.first << " Cows: " << res.second << "\n";
 	const std::vector<std::vector<int>> allPerm{ll.get()};
@@ -92,56 +93,15 @@ void compVSPlayer()
 		knut::eraseAllDiff(bullsCows, currentVal, &multi);
 		auto f = std::async(&knut::choiceMiniMax<int>, multi, allPerm);
 		std::cout << "\nInsert numb \n";
-		player = generator::getPlayer<std::vector<int>>();
+		player = getPlayer<std::vector<int>>();
 		res = counter::countBullsCows(computer.begin(), computer.end(), player.begin());
 		std::cout << "Bulls: " << res.first << " Cows: " << res.second << "\n";
 		currentVal = f.get();
 	}
-}
+}*/
 
-void newGame()
-{
-	std::cout << "New Game";
-}
 
-void loadGame()
-{
-	std::cout << "Load Game";
-}
-
-enum class CommandNumb
-{
-	newGame,
-	loadGame,
-	settings,
-	exit
-};
-
-int menu()
-{
-	int res{};
-	const std::map<CommandNumb, std::pair<std::string, std::function<void()>>>
-		kCommandMenu{{CommandNumb::newGame, {"New game", newGame}},
-					 {CommandNumb::loadGame, {"Load game", loadGame}},
-					 {CommandNumb::settings, {"Settings", menu_settings::settings}},
-					 {CommandNumb::exit, {"Exit", []()
-					 { exit(0); }}}};
-	std::cout << std::setw(25) << std::setfill('-') << "\n";
-	for(auto command : kCommandMenu){
-		std::cout << static_cast<int>(command.first) << " - " << command.second.first << std::endl;
-	}
-	std::cout << std::setw(25) << std::setfill('-') << "\n" << std::endl;
-	std::cout << std::setfill(' ');
-	std::cout << "Select an action: ";
-	std::cin >> res;
-	try{
-		kCommandMenu.at(static_cast<CommandNumb>(res)).second();
-	}
-	catch(std::exception& ex) {
-		std::cout << "Error! Insert correct variant (" << ex.what() << ")" << std::endl;
-	}
-	return res;
-}
+#include <memory>
 
 int main()
 {
@@ -152,8 +112,26 @@ int main()
 	auto end = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<double> diff = end - start;
 	std::cout << "Time to player: " << diff << ' s!\n';*/
-	menu();
+
+	/*core::CoreGame core;
+	core.start();*/
+
+	std::unique_ptr<BaseFunctional<int>> gen =
+		std::make_unique< RepeatSymbols<int> >(std::vector<int>({1,2,3,4,5,5,6,7,8,9,0}), 4, std::optional<int>(0));
+	auto rr = gen->getAllVariant();
+	std::cout << rr;
+	/*for(int i =0; i < 100; ++i){
+		auto vect = gen->getRandom();
+		bool res = gen->check(vect);
+		if(res)
+			std::cout << vect << "\n";
+		else
+			std::cerr << vect << "\n";
+	}*/
+
+
+	//menu();
 	//menu_settings::settings();
-	system("pause");
+	//system("pause");
 	return 0;
 }

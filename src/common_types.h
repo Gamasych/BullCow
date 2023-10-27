@@ -6,6 +6,8 @@
 
 #include <concepts>
 
+constexpr int kWidthDivider {25};
+
 template<class T>
 concept Integer = requires(T a) {
 	{ a } -> std::convertible_to<int>;
