@@ -17,7 +17,7 @@
 #include <set>
 #include <unordered_set>
 
-template<typename T>
+template<Symbol T>
 class BaseFunctional
 {
 public:
@@ -46,7 +46,7 @@ protected:
 	const std::optional<T> first_;
 };
 
-template<typename T>
+template<Symbol T>
 class RepeatSymbols: public BaseFunctional<T>
 {
 public:
@@ -62,7 +62,7 @@ private:
 	std::vector<std::vector<T>> generator(int count, const std::vector<T> &arr);
 };
 
-template<typename T>
+template<Symbol T>
 class IndividualSymbols: public BaseFunctional<T>
 {
 public:
@@ -80,10 +80,10 @@ public:
 	std::vector<std::vector<T>> getAllVariant();
 };
 
-template<typename T>
+template<Symbol T>
 bool BaseFunctional<T>::check(const std::vector<T> &vec)
 {
-	if (vec.size() == 0) return false;
+	if (vec.size() != count_) return false;
 	if (first_.has_value() && *vec.begin() == first_.value()) return false;
 	for (const auto val : vec) {
 		if (values_.find(val) == values_.end()) return false;
@@ -91,25 +91,31 @@ bool BaseFunctional<T>::check(const std::vector<T> &vec)
 	return true;
 }
 
-template<typename T>
+template<Symbol T>
 std::vector<T> BaseFunctional<T>::getPlayer(std::istream &in)
 {
 	std::vector<T> res{};
 	do {
 		if (res.size()) {
-			std::cerr << "Incorrect values! Please, try again";
+			std::cerr << "Incorrect values! Please, try again" << std::endl;
+			std::cout << "Input " << count_ << " symbols. From values: [";
+			for (auto it = values_.begin(); it != values_.end();) {
+				std::cout << *it;
+				if (++it != values_.end()) std::cout << ", ";
+			}
+			std::cout << "]" << std::endl;
 		}
 		res.clear();
-		std::cout << "Input " << count_ << " symbols. From values: [";
-		for (auto it = values_.begin(); it != values_.end();) {
-			std::cout << *it;
-			if (++it != values_.end()) std::cout << ", ";
-		}
-		std::cout << "]" << std::endl;
 		for (int i = 0; i < count_; ++i) {
-			T temp;
-			in >> temp;
-			res.push_back(temp);
+			T val;
+			if (in >> val)
+				res.push_back(val);
+			else {
+				std::string temp;
+				in.clear();
+				in >> temp;
+				break;
+			}
 		}
 	}
 	while (!check(res));
@@ -117,7 +123,7 @@ std::vector<T> BaseFunctional<T>::getPlayer(std::istream &in)
 	return res;
 }
 
-template<typename T>
+template<Symbol T>
 std::vector<T> RepeatSymbols<T>::getRandom()
 {
 	std::vector<T> res{};
@@ -139,7 +145,7 @@ std::vector<T> RepeatSymbols<T>::getRandom()
 	return res;
 }
 
-template<typename T>
+template<Symbol T>
 std::vector<std::vector<T>> RepeatSymbols<T>::getAllVariant()
 {
 	return generator(BaseFunctional<T>::count_,
@@ -147,7 +153,7 @@ std::vector<std::vector<T>> RepeatSymbols<T>::getAllVariant()
 
 }
 
-template<typename T>
+template<Symbol T>
 std::vector<std::vector<T>> RepeatSymbols<T>::generator(int count, const std::vector<T> &arr)
 {
 	std::vector<std::vector<T>> res{};
@@ -168,7 +174,7 @@ std::vector<std::vector<T>> RepeatSymbols<T>::generator(int count, const std::ve
 	return res;
 }
 
-template<typename T>
+template<Symbol T>
 bool IndividualSymbols<T>::check(const std::vector<T> &vec)
 {
 	std::set<T> temp;
@@ -179,7 +185,7 @@ bool IndividualSymbols<T>::check(const std::vector<T> &vec)
 	return true;
 }
 
-template<typename T>
+template<Symbol T>
 std::vector<T> IndividualSymbols<T>::getRandom()
 {
 	std::vector<T> res{BaseFunctional<T>::values_.begin(), BaseFunctional<T>::values_.end()};
@@ -191,7 +197,7 @@ std::vector<T> IndividualSymbols<T>::getRandom()
 	return res;
 }
 
-template<typename T>
+template<Symbol T>
 std::vector<std::vector<T>> IndividualSymbols<T>::getAllVariant()
 {
 	std::vector<std::vector<T>> res;

@@ -8,6 +8,8 @@
 #include <stdexcept>
 #include <iostream>
 
+
+//TODO Проверки на правильные входные данные
 namespace menu_settings
 {
 MenuSettings::Settings::Settings()

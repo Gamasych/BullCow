@@ -3,11 +3,13 @@
 //
 
 #include "core.h"
-#include "common_types.h"
 #include <iomanip>
 #include <iostream>
 #include <stdexcept>
 #include <ctime>
+#include "counter.h"
+#include "knut.h"
+#include <future>
 
 namespace core
 {
@@ -30,7 +32,14 @@ void CoreGame::start()
 		std::cout << std::setw(kWidthDivider) << std::setfill('-') << "\n" << std::endl;
 		std::cout << std::setfill(' ');
 		std::cout << "Select an action: ";
-		std::cin >> res;
+
+		if (!(std::cin >> res)) {
+			std::string temp;
+			std::cin.clear();
+			std::cin >> temp;
+			continue;
+		}
+
 		try {
 			(this->*(commandMenu_.at(static_cast<CommandNumb>(res)).second))();
 		}
@@ -43,9 +52,21 @@ void CoreGame::start()
 
 void CoreGame::playGame()
 {
-	std::cout << "PLAY";
-	const auto& params = settings_.getValue();
-
+	const auto &params = settings_.getValue();
+	std::shared_ptr<BaseFunctional<int> > gen
+		{std::make_shared<IndividualSymbols<int> >(IndividualSymbols<int>({1, 2, 3, 4, 5, 6, 7, 8, 9, 0},
+																		  4,
+																		  std::optional<int>()))};
+	std::shared_ptr<knut::KnutBase<int> > knut{
+		std::make_shared<knut::HardKnut<int> >(knut::HardKnut<int>(gen->getAllVariant()))
+	};
+	std::cout << std::setw(kWidthDivider) << std::setfill('_') << "\n";
+	std::cout << std::setfill(' ');
+	/*player(gen);
+	computer(knut);*/
+	playerVsComputer(gen, knut);
+	std::cout << std::setw(kWidthDivider) << std::setfill('_') << "\n";
+	std::cout << std::setfill(' ');
 }
 
 void CoreGame::settingsGame()
@@ -55,9 +76,9 @@ void CoreGame::settingsGame()
 
 void CoreGame::exitGame()
 {
-	const int morning[] {8,12};
-	const int day[] {12,16};
-	const int evening[] {16,22};
+	const int morning[]{8, 12};
+	const int day[]{12, 16};
+	const int evening[]{16, 22};
 	time_t t1 = time(nullptr);
 	tm t = *localtime(&t1);
 	auto hours = t.tm_hour;
@@ -75,5 +96,66 @@ void CoreGame::exitGame()
 
 	std::cout << "\n" << std::setw(kWidthDivider) << std::setfill('#') << "\n" << std::endl;
 	std::cout << std::setfill(' ');
+}
+
+template<Symbol T>
+void CoreGame::player(std::shared_ptr<BaseFunctional<T> > generator)
+{
+	auto computer{generator->getRandom()};
+	int count{1};
+	std::cout << "The computer guessed a number. Try to guess it!\n";
+	do {
+		std::cout << "Insert numb: " << std::endl;
+		auto player{generator->getPlayer()};
+		auto res = counter::countBullsCows(computer.begin(), computer.end(), player.begin());
+		std::cout << "Bulls: " << res.first << "; Cows: " << res.second << "\n";
+		if (res.first == player.size())
+			break;
+		++count;
+	}
+	while (true);
+	std::cout << "You WIN!!! You have used " << count << " attempts!" << "\n";
+}
+
+template<Symbol T>
+void CoreGame::computer(std::shared_ptr<knut::KnutBase<T>> knut)
+{
+	std::pair<int, int> bullsCows{0, 0};
+	int count{1};
+	std::cout << "Please guess the meaning. The computer will try to guess!\n";
+	do {
+		auto currentVal{knut->getSolutions()};
+		std::cout << "The computer thinks the answer is: \n" << currentVal << "\nInsert Bulls cows\n";
+		std::cin >> bullsCows.first >> bullsCows.second;
+		if (bullsCows.first == currentVal.size())
+			break;
+		knut->eraseAllDiff(bullsCows);
+		++count;
+	}
+	while (true);
+	std::cout << "Computer WIN!!! They have used " << count << " attempts!" << "\n";
+}
+
+template<Symbol T>
+void CoreGame::playerVsComputer(std::shared_ptr<BaseFunctional<T> > generator, std::shared_ptr<knut::KnutBase<T>> knut)
+{
+	auto computer{generator->getRandom()};
+	int count{1};
+	std::pair<int, int> res_computer{0, 0}, res_player{0,0};
+	auto func = std::async(&knut::KnutBase<T>::getSolutions, knut);
+	std::cout << "Please guess the meaning.\nThe computer guessed a number.\nBeat me!\n";
+	do{
+		std::cout << "Insert numb: " << std::endl;
+		auto player{generator->getPlayer()};
+		res_player = counter::countBullsCows(computer.begin(), computer.end(), player.begin());
+		std::cout << "Bulls: " << res_player.first << "; Cows: " << res_player.second << "\n";
+
+		auto currentVal{func.get()};
+		std::cout << "The computer thinks the answer is: \n" << currentVal << "\nInsert Bulls cows\n";
+		std::cin >> res_computer.first >> res_computer.second;
+		knut->eraseAllDiff(res_computer);
+		func = std::async(&knut::KnutBase<T>::getSolutions, knut);
+		++count;
+	}while(res_computer.first != computer.size() && res_player.first != computer.size());
 }
 } // core

@@ -8,6 +8,10 @@
 #include "menu.h"
 #include <map>
 #include <string>
+#include <memory>
+#include "generator.h"
+#include "knut.h"
+#include "common_types.h"
 
 namespace core
 {
@@ -22,7 +26,12 @@ private:
 	void settingsGame();
 	void exitGame();
 
-
+	template<Symbol T>
+	void player(std::shared_ptr<BaseFunctional<T> > generator);
+	template<Symbol T>
+	void computer(std::shared_ptr<knut::KnutBase<T>> knut);
+	template<Symbol T>
+	void playerVsComputer(std::shared_ptr<BaseFunctional<T> > generator, std::shared_ptr<knut::KnutBase<T>> knut);
 
 	enum class CommandNumb
 	{
@@ -31,7 +40,7 @@ private:
 		exit
 	};
 
-	const std::map<CommandNumb, std::pair<std::string, void(CoreGame::*)()>> commandMenu_;
+	const std::map<CommandNumb, std::pair<std::string, void (CoreGame::*)()>> commandMenu_;
 	menu_settings::MenuSettings settings_;
 };
 

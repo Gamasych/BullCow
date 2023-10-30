@@ -5,8 +5,25 @@
 #define COMMON_TYPES_H
 
 #include <concepts>
+#include <vector>
+#include <iostream>
 
-constexpr int kWidthDivider {25};
+constexpr int kWidthDivider{25};
+
+template<typename T>
+std::ostream &operator<<(std::ostream &os, const std::vector<T> &arr)
+{
+	os << "[";
+	for(int i = 0; i < arr.size(); ++i){
+		os << arr[i];
+		if(i < arr.size() - 1) os << ", ";
+	}
+	os << "]" << std::endl;
+	return os;
+}
+
+template<typename T>
+concept Symbol = std::same_as<T, char> || std::is_convertible_v<T, int>;
 
 template<class T>
 concept Integer = requires(T a) {
