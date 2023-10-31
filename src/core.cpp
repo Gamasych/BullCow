@@ -3,12 +3,10 @@
 //
 
 #include "core.h"
+#include "counter.h"
 #include <iomanip>
 #include <iostream>
-#include <stdexcept>
 #include <ctime>
-#include "counter.h"
-#include "knut.h"
 #include <future>
 
 namespace core
@@ -62,8 +60,8 @@ void CoreGame::playGame()
 	};
 	std::cout << std::setw(kWidthDivider) << std::setfill('_') << "\n";
 	std::cout << std::setfill(' ');
-	/*player(gen);
-	computer(knut);*/
+	player(gen);
+	computer(knut);
 	playerVsComputer(gen, knut);
 	std::cout << std::setw(kWidthDivider) << std::setfill('_') << "\n";
 	std::cout << std::setfill(' ');
@@ -108,8 +106,8 @@ void CoreGame::player(std::shared_ptr<BaseFunctional<T> > generator)
 		std::cout << "Insert numb: " << std::endl;
 		auto player{generator->getPlayer()};
 		auto res = counter::countBullsCows(computer.begin(), computer.end(), player.begin());
-		std::cout << "Bulls: " << res.first << "; Cows: " << res.second << "\n";
-		if (res.first == player.size())
+		std::cout << res;
+		if (res.bulls() == player.size())
 			break;
 		++count;
 	}
@@ -120,14 +118,14 @@ void CoreGame::player(std::shared_ptr<BaseFunctional<T> > generator)
 template<Symbol T>
 void CoreGame::computer(std::shared_ptr<knut::KnutBase<T>> knut)
 {
-	std::pair<int, int> bullsCows{0, 0};
+	BullsCows bullsCows{0, 0};
 	int count{1};
 	std::cout << "Please guess the meaning. The computer will try to guess!\n";
 	do {
 		auto currentVal{knut->getSolutions()};
 		std::cout << "The computer thinks the answer is: \n" << currentVal << "\nInsert Bulls cows\n";
-		std::cin >> bullsCows.first >> bullsCows.second;
-		if (bullsCows.first == currentVal.size())
+		std::cin >> bullsCows;
+		if (bullsCows.bulls() == currentVal.size())
 			break;
 		knut->eraseAllDiff(bullsCows);
 		++count;
@@ -141,21 +139,21 @@ void CoreGame::playerVsComputer(std::shared_ptr<BaseFunctional<T> > generator, s
 {
 	auto computer{generator->getRandom()};
 	int count{1};
-	std::pair<int, int> res_computer{0, 0}, res_player{0,0};
+	BullsCows res_computer{0, 0}, res_player{0,0};
 	auto func = std::async(&knut::KnutBase<T>::getSolutions, knut);
 	std::cout << "Please guess the meaning.\nThe computer guessed a number.\nBeat me!\n";
 	do{
 		std::cout << "Insert numb: " << std::endl;
 		auto player{generator->getPlayer()};
 		res_player = counter::countBullsCows(computer.begin(), computer.end(), player.begin());
-		std::cout << "Bulls: " << res_player.first << "; Cows: " << res_player.second << "\n";
+		std::cout << res_player;
 
 		auto currentVal{func.get()};
 		std::cout << "The computer thinks the answer is: \n" << currentVal << "\nInsert Bulls cows\n";
-		std::cin >> res_computer.first >> res_computer.second;
+		std::cin >> res_computer;
 		knut->eraseAllDiff(res_computer);
 		func = std::async(&knut::KnutBase<T>::getSolutions, knut);
 		++count;
-	}while(res_computer.first != computer.size() && res_player.first != computer.size());
+	}while(res_computer.bulls() != computer.size() && res_player.bulls() != computer.size());
 }
 } // core

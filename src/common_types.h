@@ -7,6 +7,7 @@
 #include <concepts>
 #include <vector>
 #include <iostream>
+#include <iomanip>
 
 constexpr int kWidthDivider{25};
 
@@ -14,7 +15,8 @@ template<typename T>
 std::ostream &operator<<(std::ostream &os, const std::vector<T> &arr)
 {
 	os << "[";
-	for(int i = 0; i < arr.size(); ++i){
+	for (int i = 0; i < arr.size(); ++i)
+	{
 		os << arr[i];
 		if(i < arr.size() - 1) os << ", ";
 	}

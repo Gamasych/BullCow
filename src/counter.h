@@ -6,6 +6,7 @@
 #define COUNTER_H
 
 #include "common_types.h"
+#include "bulls_cows.h"
 #include <utility>
 #include <algorithm>
 #include <stdexcept>
@@ -14,7 +15,7 @@
 namespace counter
 {
 template<Integer T>
-std::pair<int, int> countBullsCows(T trust, T verifiable, int base = 10)
+BullsCows countBullsCows(T trust, T verifiable, int base = 10)
 {
 	int bulls{0}, cows{0};
 	std::unordered_set<int> temp;
@@ -29,11 +30,11 @@ std::pair<int, int> countBullsCows(T trust, T verifiable, int base = 10)
 		else if (temp.find(verifiable % base) != temp.end())
 			++cows;
 	}
-	return std::make_pair(bulls, cows);
+	return BullsCows(bulls, cows);
 }
 
 template<MapTemplate T>
-std::pair<int, int> countBullsCows(const T &trust, const T &verifiable)
+BullsCows countBullsCows(const T &trust, const T &verifiable)
 {
 	int bulls{0}, cows{0};
 
@@ -46,11 +47,11 @@ std::pair<int, int> countBullsCows(const T &trust, const T &verifiable)
 				++cows;
 		}
 	}
-	return std::make_pair(bulls, cows);
+	return BullsCows(bulls, cows);
 }
 
 template<RandomIterator It>
-std::pair<int, int> countBullsCows(It first, It end, It first_verifiable)
+BullsCows countBullsCows(It first, It end, It first_verifiable)
 {
 	int bulls{0}, cows{0};
 
@@ -60,7 +61,7 @@ std::pair<int, int> countBullsCows(It first, It end, It first_verifiable)
 		else if (std::find(first_temp, end, *first_verifiable) != end)
 			++cows;
 	}
-	return std::make_pair(bulls, cows);
+	return BullsCows(bulls, cows);
 }
 
 } // counter

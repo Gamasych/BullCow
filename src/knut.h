@@ -6,6 +6,7 @@
 #define KNUT_H
 
 #include "counter.h"
+#include "bulls_cows.h"
 #include <iostream>
 #include <vector>
 #include <functional>
@@ -28,7 +29,7 @@ public:
 	{ if (solutions.size() == 0) throw std::invalid_argument("Error! Vector solutions must be > 0 values"); }
 
 	virtual std::vector<T> getSolutions() = 0;
-	void eraseAllDiff(std::pair<int, int> bullsCows);
+	void eraseAllDiff(BullsCows bullsCows);
 
 protected:
 	std::vector<T> currentSol_;
@@ -67,7 +68,7 @@ public:
 };
 
 template<typename T>
-void KnutBase<T>::eraseAllDiff(std::pair<int, int> bullsCows)
+void KnutBase<T>::eraseAllDiff(BullsCows bullsCows)
 {
 	auto temp = currentSol_;
 	remaining_.erase(std::remove_if(remaining_.begin(),
@@ -109,13 +110,13 @@ std::vector<T> HardKnut<T>::getSolutions()
 	std::vector<T> currentVal{};
 	int N = KnutBase<T>::solutions_[0].size();
 	for (auto val_perm = KnutBase<T>::solutions_.begin(); val_perm != KnutBase<T>::solutions_.end(); ++val_perm) {
-		std::map<std::pair<int, int>, int> points{};
+		std::map<BullsCows, int> points{};
 		bool present{false};
 
 		std::for_each(KnutBase<T>::remaining_.begin(), KnutBase<T>::remaining_.end(), [&](const std::vector<T> &first)
 		{
 			auto p = counter::countBullsCows(val_perm->begin(), val_perm->end(), first.begin());
-			if (p.first == N) present = true;
+			if (p.bulls() == N) present = true;
 			++points[p];
 		});
 

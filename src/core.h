@@ -6,12 +6,12 @@
 #define CORE_H
 
 #include "menu.h"
-#include <map>
-#include <string>
-#include <memory>
 #include "generator.h"
 #include "knut.h"
 #include "common_types.h"
+#include <map>
+#include <string>
+#include <memory>
 
 namespace core
 {
