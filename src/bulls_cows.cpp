@@ -6,7 +6,7 @@
 
 std::ostream& operator<<(std::ostream &os, const BullsCows &counter)
 {
-	return os << "Bulls: " << counter.bulls() << ". Cows: " << counter.cows() << std::endl;
+	return os << "Bulls: " << counter.bulls() << ". Cows: " << counter.cows();
 }
 
 std::istream &operator>>(std::istream &in, BullsCows &counter)

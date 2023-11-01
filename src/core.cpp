@@ -61,8 +61,8 @@ void CoreGame::playGame()
 	std::cout << std::setw(kWidthDivider) << std::setfill('_') << "\n";
 	std::cout << std::setfill(' ');
 	player(gen);
-	computer(knut);
-	playerVsComputer(gen, knut);
+	//computer(knut);
+	//playerVsComputer(gen, knut);
 	std::cout << std::setw(kWidthDivider) << std::setfill('_') << "\n";
 	std::cout << std::setfill(' ');
 }
@@ -99,14 +99,19 @@ void CoreGame::exitGame()
 template<Symbol T>
 void CoreGame::player(std::shared_ptr<BaseFunctional<T> > generator)
 {
+	std::vector<std::vector<std::pair<std::vector<T>, BullsCows> > > progress;
 	auto computer{generator->getRandom()};
 	int count{1};
 	std::cout << "The computer guessed a number. Try to guess it!\n";
 	do {
+		std::vector<std::pair<std::vector<T>, BullsCows> > current_progress;
 		std::cout << "Insert numb: " << std::endl;
 		auto player{generator->getPlayer()};
 		auto res = counter::countBullsCows(computer.begin(), computer.end(), player.begin());
-		std::cout << res;
+		std::cout << res << std::endl;
+		current_progress.push_back(std::make_pair(player, res));
+		progress.push_back(current_progress);
+		printTable(progress);
 		if (res.bulls() == player.size())
 			break;
 		++count;
@@ -118,16 +123,21 @@ void CoreGame::player(std::shared_ptr<BaseFunctional<T> > generator)
 template<Symbol T>
 void CoreGame::computer(std::shared_ptr<knut::KnutBase<T>> knut)
 {
-	BullsCows bullsCows{0, 0};
+	std::vector<std::vector<std::pair<std::vector<T>, BullsCows> > > progress;
+	BullsCows res{0, 0};
 	int count{1};
 	std::cout << "Please guess the meaning. The computer will try to guess!\n";
 	do {
-		auto currentVal{knut->getSolutions()};
-		std::cout << "The computer thinks the answer is: \n" << currentVal << "\nInsert Bulls cows\n";
-		std::cin >> bullsCows;
-		if (bullsCows.bulls() == currentVal.size())
+		std::vector<std::pair<std::vector<T>, BullsCows> > current_progress;
+		auto computer_val{knut->getSolutions()};
+		std::cout << "The computer thinks the answer is: \n" << computer_val << "\nInsert Bulls cows\n";
+		std::cin >> res;
+		knut->eraseAllDiff(res);
+		current_progress.push_back(std::make_pair(computer_val, res));
+		progress.push_back(current_progress);
+		printTable(progress);
+		if (res.bulls() == computer_val.size())
 			break;
-		knut->eraseAllDiff(bullsCows);
 		++count;
 	}
 	while (true);
@@ -137,23 +147,30 @@ void CoreGame::computer(std::shared_ptr<knut::KnutBase<T>> knut)
 template<Symbol T>
 void CoreGame::playerVsComputer(std::shared_ptr<BaseFunctional<T> > generator, std::shared_ptr<knut::KnutBase<T>> knut)
 {
+	std::vector<std::vector<std::pair<std::vector<T>, BullsCows>>> progress;
 	auto computer{generator->getRandom()};
 	int count{1};
-	BullsCows res_computer{0, 0}, res_player{0,0};
+	BullsCows res_computer{0, 0}, res_player{0, 0};
 	auto func = std::async(&knut::KnutBase<T>::getSolutions, knut);
 	std::cout << "Please guess the meaning.\nThe computer guessed a number.\nBeat me!\n";
-	do{
+	do {
+		std::vector<std::pair<std::vector<T>, BullsCows> > current_progress;
 		std::cout << "Insert numb: " << std::endl;
-		auto player{generator->getPlayer()};
-		res_player = counter::countBullsCows(computer.begin(), computer.end(), player.begin());
-		std::cout << res_player;
+		auto player_value{generator->getPlayer()};
+		res_player = counter::countBullsCows(computer.begin(), computer.end(), player_value.begin());
+		std::cout << res_player << std::endl;
+		current_progress.push_back(std::make_pair(player_value, res_player));
 
-		auto currentVal{func.get()};
-		std::cout << "The computer thinks the answer is: \n" << currentVal << "\nInsert Bulls cows\n";
+		auto computer_value{func.get()};
+		std::cout << "The computer thinks the answer is: \n" << computer_value << "\nInsert Bulls cows\n";
 		std::cin >> res_computer;
 		knut->eraseAllDiff(res_computer);
 		func = std::async(&knut::KnutBase<T>::getSolutions, knut);
+		current_progress.push_back(std::make_pair(computer_value, res_computer));
+		progress.push_back(current_progress);
 		++count;
-	}while(res_computer.bulls() != computer.size() && res_player.bulls() != computer.size());
+		printTable(progress);
+	}
+	while (res_computer.bulls() != computer.size() && res_player.bulls() != computer.size());
 }
 } // core

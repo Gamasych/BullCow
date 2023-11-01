@@ -7,6 +7,7 @@
 
 int main()
 {
+	std::cout << answer;
 	core::CoreGame core;
 	core.start();
 
